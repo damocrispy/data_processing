@@ -134,15 +134,11 @@ def get_longest_streaks(vehicles):
 def handler():
 
     #   Read contents of input file as a JSON object.
-    with open('function_input.json', 'r') as input_json:
+    with open('./function_input.json', 'r') as input_json:
         input_dict = json.load(input_json)
 
     #   Convert to useable JSON object.
     vehicles = unpack(input_dict)
-
-    #   Write results to a file.
-    with open('function_ouput.json', 'w') as output_file:
-        json.dump(vehicles, output_file, indent=4)
 
     print('There are ' + str(len(vehicles)) + ' vehicles in the dataset.')
 
@@ -159,7 +155,7 @@ def handler():
 
 
     #   Write results to a file.
-    with open('function_ouput.json', 'w') as output_file:
+    with open('./function_ouput.json', 'w') as output_file:
         json.dump(vehicles_streaks, output_file, indent=4)
 
     return

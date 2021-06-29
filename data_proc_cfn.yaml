@@ -2,3 +2,44 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: Cloudformation stack template for data processing infra
 Transform: "AWS::Serverless-2016-10-31"
 Parameters:
+  LogLevel: 
+    Type: String
+    AllowedValues:
+      - "ERROR"
+      - "DEBUG"
+      - "INFO" 
+
+Resources:
+
+  DataProcLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: "data-proc-5iy7zhor4omk"
+        S3Key: "data_proc.zip"
+      Description: Data Processing Lambda
+      FunctionName: "data-proc-June2021"
+      Handler: main.handler
+      MemorySize: 512
+      Role: !GetAtt DataProcLambdaRole.Arn
+      Runtime: python3.7
+      Timeout: 30
+      Environment:
+        Variables:
+          log_level: !Ref LogLevel
+
+  DataProcLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: "data-proc-June2021-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
