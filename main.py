@@ -28,6 +28,13 @@ def unpack(input_dict):
         #   Add the payloads to the payload list.
         vehicles[record['vehicle_id']].extend(pl_dict['tracking'])
 
+    #   Convert all timestamps to Unix epoch.
+    for vehicle in vehicles:
+        for record in vehicles[vehicle]:
+            time = dt.strptime(record['timestamp'], "%Y-%m-%dT%H:%M:%S.000,+00:00")
+            epoch = time.timestamp()
+            record['timestamp'] = epoch
+
     return vehicles
 
 def get_average_speed(vehicle):
@@ -105,27 +112,26 @@ def get_longest_streaks(vehicles):
             current_status = vehicles[vehicle][i]['status']
             next_status = vehicles[vehicle][i+1]['status']
 
-            #   If status doesn't change and this is the start of a new streak...
-            if current_status == next_status and status_streaks[current_status]['start'] == 'init':
-                #   ...save the timestamp as the streak start time.
+            #   Initialise streak start time with timestamp of current datapoint, if needed.
+            #   This will only run once for each status.
+            if status_streaks[current_status]['start'] == 'init':
                 status_streaks[current_status]['start'] = vehicles[vehicle][i]['timestamp']
 
             #   If status changes...
-            elif current_status != next_status:# and status_streaks[current_status]['start'] == 'init':
+            if current_status != next_status:
                 #   ...calculate length of streak...
-                last = dt.strptime(vehicles[vehicle][i+1]['timestamp'], "%Y-%m-%dT%H:%M:%S.000,+00:00")
-                first = dt.strptime(status_streaks[current_status]['start'], "%Y-%m-%dT%H:%M:%S.000,+00:00")
-                length = (last - first).total_seconds()
+                last = vehicles[vehicle][i+1]['timestamp']
+                print(last)
+                first = status_streaks[current_status]['start']
+                print(current_status)
+                length = (last - first)
+                print(length)
                 #   ...and save it if its the longest.
                 if length > status_streaks[current_status]['longest']:
                     status_streaks[current_status]['longest'] = length
-                #   ...initialise the start time,...
-                status_streaks[current_status]['start'] = 'init'
 
-            #   If status doesn't change and this is an ongoing streak...
-            elif current_status == next_status and status_streaks[current_status]['start'] != 'init':
-                #   ...don't do anything.
-                pass
+                #   Re-initialise the streak start time for the status of the next datapoint.
+                status_streaks[next_status]['start'] = last
         
         vehicle_streaks.append(status_streaks)
 
@@ -149,14 +155,14 @@ def handler():
     vehicles_statuses = get_statuses(vehicles)
 
     vehicles_streaks = get_longest_streaks(vehicles_statuses)
-    print(vehicles_streaks)
+    # print(vehicles_streaks)
     # get_longest_idling()
     # get_longest_moving()
 
 
     #   Write results to a file.
     with open('./function_ouput.json', 'w') as output_file:
-        json.dump(vehicles_streaks, output_file, indent=4)
+        json.dump(vehicles, output_file, indent=4)
 
     return
 
