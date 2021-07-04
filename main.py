@@ -85,9 +85,9 @@ def get_statuses(vehicles):
 
     return vehicles
 
-def get_longest_streaks(vehicles):
+def get_vehicle_streaks(vehicles):
     
-    vehicle_streaks = []
+    vehicle_streaks = {}
 
     #   Iterate through vehicles.
     for vehicle in vehicles:
@@ -121,11 +121,9 @@ def get_longest_streaks(vehicles):
             if current_status != next_status:
                 #   ...calculate length of streak...
                 last = vehicles[vehicle][i+1]['timestamp']
-                print(last)
                 first = status_streaks[current_status]['start']
-                print(current_status)
                 length = (last - first)
-                print(length)
+
                 #   ...and save it if its the longest.
                 if length > status_streaks[current_status]['longest']:
                     status_streaks[current_status]['longest'] = length
@@ -133,9 +131,27 @@ def get_longest_streaks(vehicles):
                 #   Re-initialise the streak start time for the status of the next datapoint.
                 status_streaks[next_status]['start'] = last
         
-        vehicle_streaks.append(status_streaks)
+        #   Add to list for all vehicles.
+        vehicle_streaks[vehicle] = status_streaks
 
     return vehicle_streaks
+
+def get_longest_streak(streaks, status):
+
+    #   Initialise object to be returned.
+    streaker = {
+        'vehicle': 'vehicleid',
+        'streak': 0.0
+    }
+
+    #   For each vehicle...
+    for vehicle in streaks:
+        #   ...compare its longest streak to the current record holder.
+        if streaks[vehicle][status]['longest'] > streaker['streak']:
+            streaker['vehicle'] = vehicle
+            streaker['streak'] = streaks[vehicle][status]['longest']
+
+    return streaker
 
 def handler():
 
@@ -154,11 +170,16 @@ def handler():
     #   Augment the list of vehicles with parked/idling/moving status
     vehicles_statuses = get_statuses(vehicles)
 
-    vehicles_streaks = get_longest_streaks(vehicles_statuses)
-    # print(vehicles_streaks)
-    # get_longest_idling()
-    # get_longest_moving()
+    vehicles_streaks = get_vehicle_streaks(vehicles_statuses)
 
+    parked = get_longest_streak(vehicles_streaks, 'parked')
+    print('Vehicle parked longest was ' + parked['vehicle'] + ' at ' + str(parked['streak']) +  's.')
+
+    idling = get_longest_streak(vehicles_streaks, 'idling')
+    print('Vehicle idling longest was ' + idling['vehicle'] + ' at ' + str(idling['streak']) +  's.')
+
+    moving = get_longest_streak(vehicles_streaks, 'moving')
+    print('Vehicle parked longest was ' + moving['vehicle'] + ' at ' + str(moving['streak']) +  's.')
 
     #   Write results to a file.
     with open('./function_ouput.json', 'w') as output_file:
